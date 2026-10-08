@@ -1,0 +1,44 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+.herenow
+test-results
+playwright-report
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vercel
+
+# Private handover data and local tooling
+.env*
+!.env.example
+backups/
+output/
+.playwright-cli/
+.superpowers/
+supabase/.temp/
+supabase/.branches/
+private/
+*.env
+*.sabai
+*.bundle
+*.dump
+*.sql.gz
