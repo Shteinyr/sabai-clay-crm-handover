@@ -3,7 +3,7 @@ import { dirname, resolve, join } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 import { checksums, safeStoragePath, seal } from './archive.mjs'
-import { exportConfig, jsonReadQuery } from './exportConfig.mjs'
+import { exportConfig, jsonReadQuery, sourceMetadata } from './exportConfig.mjs'
 
 process.umask(0o077)
 const { token, ref, databaseUrl, url: databaseConnection, serviceKey: configuredServiceKey } = exportConfig(process.env)
@@ -126,8 +126,7 @@ await writeFile(join(payload, 'database-counts.json'), JSON.stringify(counts, nu
 const endCounts = await query(tables.map(({ schemaname, tablename }) => `select '${schemaname}.${tablename}' as name,count(*)::int as rows from "${schemaname}"."${tablename}"`).join(' union all '))
 const manifest = {
   format: 1, createdAt: new Date().toISOString(), sourceProject: ref,
-  gitCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
-  workingTreeChanges: execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim(),
+  ...sourceMetadata(),
   note: 'Preliminary backup while studio may be active. Final cutover requires a write freeze and a fresh verified backup.',
   countsStableDuringExport: JSON.stringify(counts) === JSON.stringify(endCounts),
   rows: counts.map((row) => row.name === 'public.audit_log' ? { ...row, rows: auditRows } : row),

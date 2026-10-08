@@ -1,3 +1,5 @@
+import { execFileSync } from 'node:child_process'
+
 export function exportConfig(env) {
   const ref = env.HANDOVER_PROJECT_REF
   const databaseUrl = env.HANDOVER_DATABASE_URL
@@ -24,4 +26,16 @@ export function exportConfig(env) {
 
 export function jsonReadQuery(sql) {
   return `select coalesce(json_agg(export_row),'[]'::json)::text from (${sql.replace(/;\s*$/, '')}) export_row`
+}
+
+export function sourceMetadata(cwd = process.cwd()) {
+  try {
+    const options = { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
+    return {
+      gitCommit: execFileSync('git', ['rev-parse', 'HEAD'], options).trim(),
+      workingTreeChanges: execFileSync('git', ['status', '--porcelain'], options).trim(),
+    }
+  } catch {
+    return { gitCommit: null, workingTreeChanges: null, sourceNote: 'Code from ZIP or standalone archive; Git metadata unavailable.' }
+  }
 }

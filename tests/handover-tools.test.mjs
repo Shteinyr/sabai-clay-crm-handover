@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { seal, unseal, safeStoragePath, checksums } from '../scripts/handover/archive.mjs'
 import { prepareRestore } from '../scripts/handover/prepareRestore.mjs'
-import { exportConfig, jsonReadQuery } from '../scripts/handover/exportConfig.mjs'
+import { exportConfig, jsonReadQuery, sourceMetadata } from '../scripts/handover/exportConfig.mjs'
 
 test('authenticated archive roundtrip, wrong password, tamper and overwrite protection', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'sabai-archive-'))
@@ -52,6 +52,17 @@ test('project-only export needs no personal token and validates source boundarie
     assert.throws(() => exportConfig({ ...env, ...invalid }), (error) => !error.message.includes('do-not-print'))
   }
   assert.equal(jsonReadQuery('select 1 as count;'), "select coalesce(json_agg(export_row),'[]'::json)::text from (select 1 as count) export_row")
+})
+
+test('ZIP and standalone source exports do not depend on Git history', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'sabai-no-git-'))
+  try {
+    const metadata = sourceMetadata(dir)
+    assert.equal(metadata.gitCommit, null)
+    assert.equal(metadata.workingTreeChanges, null)
+    assert.match(metadata.sourceNote, /ZIP/)
+    assert.match(sourceMetadata().gitCommit, /^[a-f0-9]{40}$/)
+  } finally { await rm(dir, { recursive: true, force: true }) }
 })
 
 test('restore SQL preserves business rows and identities, skips stale sessions and storage metadata', async () => {
